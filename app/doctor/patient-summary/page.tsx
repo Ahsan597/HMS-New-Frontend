@@ -1,10 +1,12 @@
 "use client";
 
-export default function PatientSummary() {
+import DashboardWrapper from '@/app/components/DashboardWrapper';
+
+export default function PatientSummaryPage() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Patient Summary</h1>
-      <p className="text-gray-600">Patient summaries will appear here</p>
-    </div>
+    <DashboardWrapper requiredRole="doctor">
+      <h1 className="text-3xl font-bold">Patient Summary</h1>
+      <p className="text-gray-600 mt-2">View patient summaries</p>
+    </DashboardWrapper>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
-export default function VisitHistory() {
+import DashboardWrapper from '@/app/components/DashboardWrapper';
+
+export default function VisitHistoryPage() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Visit History</h1>
-      <p className="text-gray-600">Your visit history will appear here</p>
-    </div>
+    <DashboardWrapper requiredRole="patient">
+      <h1 className="text-3xl font-bold">Visit History</h1>
+      <p className="text-gray-600 mt-2">Your past medical visits</p>
+    </DashboardWrapper>
   );
 }

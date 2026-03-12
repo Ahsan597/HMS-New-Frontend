@@ -21,7 +21,7 @@ export default function Sidebar({ role }: SidebarProps) {
       )
     },
     {
-      name: 'Appointment Overview',
+      name: 'Appointments Overview',
       href: '/patient/appointments',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,6 +51,15 @@ export default function Sidebar({ role }: SidebarProps) {
       )
     },
     {
+      name: 'Appointments',
+      href: '/doctor/appointments',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      )
+    },
+      {
       name: 'Patient Summary',
       href: '/doctor/patient-summary',
       icon: (
@@ -59,36 +68,23 @@ export default function Sidebar({ role }: SidebarProps) {
         </svg>
       )
     },
-    {
-      name: 'Patient Management',
-      href: '/doctor/patient-management',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      )
-    }
   ];
 
   const navItems = role === 'patient' ? patientNavItems : doctorNavItems;
 
   return (
-    <div className="w-64 bg-white h-screen fixed left-0 top-0 shadow-lg">
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold text-blue-600">MediTech+</h1>
-        <p className="text-sm text-gray-500 capitalize mt-1">{role}</p>
-      </div>
+    <div className="w-64 bg-gray-500 h-full shadow-lg overflow-y-auto mt-12">
+    
 
-      <nav className="p-4">
+      <nav className="p-4 mt-4 fixed "> {/* Added mt-4 for top margin */}
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center space-x-3 p-3 rounded-lg mb-1 transition-colors ${
-              pathname === item.href
+            className={`flex items-center space-x-3 p-3 rounded-lg mb-1 transition-colors ${pathname === item.href
                 ? 'bg-blue-50 text-blue-600'
                 : 'text-gray-700 hover:bg-gray-100'
-            }`}
+              }`}
           >
             <span>{item.icon}</span>
             <span>{item.name}</span>

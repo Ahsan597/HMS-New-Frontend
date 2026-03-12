@@ -1,6 +1,8 @@
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import LayoutContent from "./components/LayoutContent";
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
   title: "Hospital System",
@@ -15,9 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gray-50">
-        <Navbar />
-        <main>{children}</main>
-         <Footer />
+        <LayoutContent>
+          {children}
+          <Toaster position="top-right" />
+        </LayoutContent>
       </body>
     </html>
   );
