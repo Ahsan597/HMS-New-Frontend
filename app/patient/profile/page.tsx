@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from 'react';
 import DashboardWrapper from '@/app/components/DashboardWrapper';
 import { patientService } from '@/app/service/patient.service';
@@ -122,32 +121,107 @@ export default function PatientProfilePage() {
     setIsEditing(false);
   };
 
-  const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      return;
-    }
+  // const handlePasswordChange = async () => {
+  //   if (passwordData.newPassword !== passwordData.confirmPassword) {
+  //     setPasswordError('Passwords do not match');
+  //     return;
+  //   }
+  //   if (passwordData.newPassword.length < 6) {
+  //     setPasswordError('Password must be at least 6 characters');
+  //     return;
+  //   }
 
-    try {
-      await patientService.changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+  //   try {
+  //     await patientService.changePassword({
+  //       currentPassword: passwordData.currentPassword,
+  //       newPassword: passwordData.newPassword
+  //     });
+  //     setPasswordSuccess('Password changed successfully');
+  //     setPasswordError('');
+  //     setTimeout(() => {
+  //       setShowPasswordModal(false);
+  //       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  //       setPasswordSuccess('');
+  //     }, 2000);
+  //   } catch (err: any) {
+  //     setPasswordError(err.response?.data?.message || 'Failed to change password');
+  //   }
+  // };
+
+const handlePasswordChange = async () => {
+  // Trim whitespace from passwords
+  const currentPassword = passwordData.currentPassword.trim();
+  const newPassword = passwordData.newPassword.trim();
+  const confirmPassword = passwordData.confirmPassword.trim();
+
+  console.log('Current:', currentPassword);
+  console.log('New:', newPassword);
+  console.log('Confirm:', confirmPassword);
+  console.log('Do they match?', newPassword === confirmPassword);
+
+  // Clear previous errors
+  setPasswordError('');
+
+  // Validation checks
+  if (!currentPassword) {
+    setPasswordError('Current password is required');
+    return;
+  }
+
+  if (!newPassword) {
+    setPasswordError('New password is required');
+    return;
+  }
+
+  if (!confirmPassword) {
+    setPasswordError('Please confirm your new password');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setPasswordError('New passwords do not match');
+    return;
+  }
+
+  if (newPassword.length < 6) {  // Patient uses 6 characters minimum
+    setPasswordError('Password must be at least 6 characters');
+    return;
+  }
+
+  // Check if new password is same as current
+  if (newPassword === currentPassword) {
+    setPasswordError('New password must be different from current password');
+    return;
+  }
+
+  try {
+    // Send all three fields including confirmPassword
+    await patientService.changePassword({
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword  // ← Add this line
+    });
+
+    setPasswordSuccess('Password changed successfully');
+    setPasswordError('');
+
+    // Clear form and close modal after success
+    setTimeout(() => {
+      setShowPasswordModal(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       });
-      setPasswordSuccess('Password changed successfully');
-      setPasswordError('');
-      setTimeout(() => {
-        setShowPasswordModal(false);
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setPasswordSuccess('');
-      }, 2000);
-    } catch (err: any) {
-      setPasswordError(err.response?.data?.message || 'Failed to change password');
-    }
-  };
+      setPasswordSuccess('');
+    }, 2000);
+
+  } catch (err: any) {
+    console.error('Password change error:', err);
+    setPasswordError(err.response?.data?.message || 'Failed to change password');
+  }
+};
+
 
   if (loading) {
     return (
@@ -616,7 +690,7 @@ export default function PatientProfilePage() {
 
         {/* Change Password Modal */}
         {showPasswordModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Change Password</h3>
               

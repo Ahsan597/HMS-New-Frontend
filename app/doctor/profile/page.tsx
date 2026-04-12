@@ -80,29 +80,77 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+
   const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('Passwords do not match');
+    // Trim whitespace from passwords
+    const currentPassword = passwordData.currentPassword.trim();
+    const newPassword = passwordData.newPassword.trim();
+    const confirmPassword = passwordData.confirmPassword.trim();
+
+    console.log('Current:', currentPassword);
+    console.log('New:', newPassword);
+    console.log('Confirm:', confirmPassword);
+    console.log('Do they match?', newPassword === confirmPassword);
+
+    // Clear previous errors
+    setPasswordError('');
+
+    // Validation checks
+    if (!currentPassword) {
+      setPasswordError('Current password is required');
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      return;
+    }
+
+    if (!confirmPassword) {
+      setPasswordError('Please confirm your new password');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+
+    // Check if new password is same as current
+    if (newPassword === currentPassword) {
+      setPasswordError('New password must be different from current password');
       return;
     }
 
     try {
+      // ✅ FIXED: Send all three fields including confirmPassword
       await doctorService.changePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword  // ← THIS WAS MISSING
       });
+
       setPasswordSuccess('Password changed successfully');
       setPasswordError('');
+
+      // Clear form and close modal after success
       setTimeout(() => {
         setShowPasswordModal(false);
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
         setPasswordSuccess('');
       }, 2000);
+
     } catch (err: any) {
+      console.error('Password change error:', err);
       setPasswordError(err.response?.data?.message || 'Failed to change password');
     }
   };
@@ -209,11 +257,10 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition ${activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 <tab.icon size={18} />
                 {tab.label}
@@ -251,7 +298,7 @@ export default function ProfilePage() {
                     <h2 className="text-xl font-bold text-gray-900">{profile.fullName}</h2>
                   )}
                   <p className="text-gray-600 mt-1">{profile.specialization}</p>
-                  
+
                   <div className="flex items-center gap-1 mt-3">
                     <Star size={16} className="text-yellow-400 fill-current" />
                     <span className="font-medium">{profile.rating.toFixed(1)}</span>
@@ -480,16 +527,18 @@ export default function ProfilePage() {
 
         {/* Change Password Modal */}
         {showPasswordModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+
             <div className="bg-white rounded-xl p-6 max-w-md w-full">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Change Password</h3>
-              
+
               {passwordSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
                   {passwordSuccess}
                 </div>
               )}
-              
+
               {passwordError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
                   {passwordError}
@@ -504,7 +553,10 @@ export default function ProfilePage() {
                   <input
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) => setPasswordData(prev => ({
+                      ...prev,
+                      currentPassword: e.target.value
+                    }))}
                     className="w-full border rounded-lg px-4 py-2"
                   />
                 </div>
@@ -516,7 +568,10 @@ export default function ProfilePage() {
                   <input
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    onChange={(e) => setPasswordData(prev => ({
+                      ...prev,
+                      newPassword: e.target.value
+                    }))}
                     className="w-full border rounded-lg px-4 py-2"
                   />
                 </div>
@@ -528,10 +583,15 @@ export default function ProfilePage() {
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={(e) => setPasswordData(prev => ({
+                      ...prev,
+                      confirmPassword: e.target.value
+                    }))}
                     className="w-full border rounded-lg px-4 py-2"
                   />
                 </div>
+
+
               </div>
 
               <div className="flex gap-3 mt-6">
