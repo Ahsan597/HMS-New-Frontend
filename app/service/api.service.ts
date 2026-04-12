@@ -11,20 +11,18 @@ class ApiService {
       },
     });
 
-    // Request interceptor
-    this.api.interceptors.request.use(
-      (config) => {
-        // Get token from localStorage if it exists
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
+ // api.service.ts - Make sure request interceptor is working
+this.api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    console.log('Request to:', config.url, 'Token exists:', !!token); // Debug
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
     // Response interceptor
     this.api.interceptors.response.use(

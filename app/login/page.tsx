@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { apiService } from '@/app/service/api.service'; // Use your apiService
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,17 +17,23 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', {
+      // ✅ Use apiService
+      const response = await apiService.post('/auth/login', {
         email,
         password
       });
 
-      const { user } = response.data;
+      console.log('Login response:', response); // Debug: see full response
       
-      // Store user data
+      // ✅ STORE BOTH TOKEN AND USER
+      const { token, user } = response; // Now this will work!
+      
+      // Store token and user in localStorage
+      localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      console.log('Login successful:', user);
+      console.log('Token stored:', token ? 'Yes' : 'No');
+      console.log('User stored:', user ? 'Yes' : 'No');
       
       // Redirect based on role
       if (user.role === 'doctor') {
@@ -35,11 +41,11 @@ export default function LoginPage() {
       } else if (user.role === 'patient') {
         router.push('/patient/dashboard');
       } else {
-        // Handle other roles if any
         router.push('/dashboard');
       }
       
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
@@ -66,7 +72,6 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            disabled={loading}
           />
         </div>
 
@@ -79,16 +84,13 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={loading}
           />
         </div>
 
         <button
           type="submit"
-          className={`w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition duration-200 ${
-            loading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
           disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>

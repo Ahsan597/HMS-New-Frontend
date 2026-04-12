@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardWrapper from '@/app/components/DashboardWrapper';
 import {
   Calendar,
@@ -38,7 +38,9 @@ import {
   DownloadCloud,
   Plus
 } from 'lucide-react';
-
+import { doctorService } from '@/app/service/doctor.service';
+import { authService } from '@/app/service/auth.service';
+import toast from 'react-hot-toast';
 // Mock data matching your API structure
 const mockAppointments = [
   {
@@ -180,18 +182,40 @@ export default function Appointments() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [showFilters, setShowFilters] = useState(false);
-
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'confirmed': return 'bg-green-500';
       case 'pending': return 'bg-yellow-500';
       case 'canceled': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    const doctorId = currentUser?.id;
+
+    if (doctorId) {
+      fetchAppointments(doctorId);
+    }
+  }, []);
+
+  const fetchAppointments = async (doctorId: string) => {
+    try {
+      setLoading(true);
+      const response = await doctorService.getDoctorAppointments(doctorId);
+      setAppointments(response.appointments);
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+      toast.error('Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'confirmed':
         return <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Confirmed</span>;
       case 'pending':
@@ -240,22 +264,22 @@ export default function Appointments() {
             </h1>
             <p className="text-gray-500 mt-1">Manage and track all patient appointments</p>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
               className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
             >
               {viewMode === 'list' ? <CalendarDays className="w-4 h-4" /> : <ListFilter className="w-4 h-4" />}
               {viewMode === 'list' ? 'Calendar View' : 'List View'}
             </button>
-            
+
             <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium">
               <DownloadCloud className="w-4 h-4" />
               Export
             </button>
-            
+
             <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5 flex items-center gap-2 text-sm font-medium">
               <Plus className="w-4 h-4" />
               New Appointment
@@ -332,11 +356,10 @@ export default function Appointments() {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-2 border rounded-xl flex items-center gap-2 transition-colors ${
-              showFilters 
-                ? 'bg-blue-50 border-blue-200 text-blue-600' 
-                : 'border-gray-200 hover:bg-gray-50'
-            }`}
+            className={`px-4 py-2 border rounded-xl flex items-center gap-2 transition-colors ${showFilters
+              ? 'bg-blue-50 border-blue-200 text-blue-600'
+              : 'border-gray-200 hover:bg-gray-50'
+              }`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             More Filters
@@ -358,14 +381,14 @@ export default function Appointments() {
               <option>Emergency</option>
               <option>Consultation</option>
             </select>
-            
+
             <select className="px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
               <option>Time Slot</option>
               <option>Morning (9AM-12PM)</option>
               <option>Afternoon (12PM-4PM)</option>
               <option>Evening (4PM-7PM)</option>
             </select>
-            
+
             <select className="px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
               <option>Sort By</option>
               <option>Date (Newest)</option>
@@ -373,7 +396,7 @@ export default function Appointments() {
               <option>Patient Name</option>
               <option>Status</option>
             </select>
-            
+
             <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
               Clear Filters
             </button>
@@ -399,85 +422,86 @@ export default function Appointments() {
 
             {/* Appointment Items */}
             <div className="divide-y divide-gray-100">
-              {mockAppointments.map((appointment) => (
-                <div 
-                  key={appointment._id} 
-                  className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    selectedAppointment?._id === appointment._id ? 'bg-blue-50/50' : ''
-                  }`}
-                  onClick={() => setSelectedAppointment(appointment)}
-                >
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    {/* Patient Info */}
-                    <div className="col-span-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <img 
-                            src={appointment.patientId.avatar} 
-                            alt={appointment.patientId.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          {appointment.urgent && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
-                              <AlertCircle className="w-2 h-2 text-white" />
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">{appointment.patientId.name}</p>
-                          <p className="text-xs text-gray-500">{appointment.reason.substring(0, 20)}...</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Date & Time */}
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-sm text-gray-800">{formatDate(appointment.appointmentDate)}</p>
-                          <p className="text-xs text-gray-500">{appointment.timeSlot}</p>
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Loading appointments...</div>
+              ) : appointments.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No appointments found</div>
+              ) : (
+                appointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${selectedAppointment?.id === appointment.id ? 'bg-blue-50/50' : ''
+                      }`}
+                    onClick={() => setSelectedAppointment(appointment)}
+                  >
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      {/* Patient Info */}
+                      <div className="col-span-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            {/* Default avatar if no image */}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                              {appointment.patientName.split(' ').map((n: string) => n[0]).join('')}
+                            </div>
+                            {appointment.urgent && (
+                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                                <span className="text-white text-xs">!</span>
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">{appointment.patientName}</p>
+                            <p className="text-xs text-gray-500">{appointment.reason.substring(0, 20)}...</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Type */}
-                    <div className="col-span-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        appointment.type === 'Emergency' ? 'bg-red-100 text-red-700' :
-                        appointment.type === 'Follow-up' ? 'bg-blue-100 text-blue-700' :
-                        appointment.type === 'Check-up' ? 'bg-green-100 text-green-700' :
-                        'bg-purple-100 text-purple-700'
-                      }`}>
-                        {appointment.type}
-                      </span>
-                    </div>
+                      {/* Date & Time */}
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <p className="text-sm text-gray-800">{formatDate(appointment.appointmentDate)}</p>
+                            <p className="text-xs text-gray-500">{appointment.timeSlot}</p>
+                          </div>
+                        </div>
+                      </div>
 
-                    {/* Status */}
-                    <div className="col-span-2">
-                      {getStatusBadge(appointment.status)}
-                    </div>
+                      {/* Type - Using reason as type since API doesn't have type field */}
+                      <div className="col-span-2">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                          {appointment.urgent ? 'Emergency' : 'Consultation'}
+                        </span>
+                      </div>
 
-                    {/* Actions */}
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-2">
-                        <button className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors">
-                          <Eye className="w-4 h-4 text-blue-600" />
-                        </button>
-                        <button className="p-1.5 hover:bg-green-100 rounded-lg transition-colors">
-                          <Check className="w-4 h-4 text-green-600" />
-                        </button>
-                        <button className="p-1.5 hover:bg-red-100 rounded-lg transition-colors">
-                          <X className="w-4 h-4 text-red-600" />
-                        </button>
-                        <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
-                          <MoreVertical className="w-4 h-4 text-gray-600" />
-                        </button>
+                      {/* Status */}
+                      <div className="col-span-2">
+                        {getStatusBadge(appointment.status)}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors">
+                            <Eye className="w-4 h-4 text-blue-600" />
+                          </button>
+                          <button className="p-1.5 hover:bg-green-100 rounded-lg transition-colors">
+                            <Check className="w-4 h-4 text-green-600" />
+                          </button>
+                          <button className="p-1.5 hover:bg-red-100 rounded-lg transition-colors">
+                            <X className="w-4 h-4 text-red-600" />
+                          </button>
+                          <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
+
+
             </div>
 
             {/* Pagination */}
@@ -500,8 +524,14 @@ export default function Appointments() {
           </div>
         </div>
 
+
+
+
+
         {/* Appointment Details Sidebar */}
         <div className="lg:col-span-1">
+
+
           {selectedAppointment ? (
             <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm sticky top-6">
               <div className="flex items-center justify-between mb-6">
@@ -513,15 +543,13 @@ export default function Appointments() {
 
               {/* Patient Quick Info */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
-                <img 
-                  src={selectedAppointment.patientId.avatar} 
-                  alt={selectedAppointment.patientId.name}
-                  className="w-16 h-16 rounded-xl object-cover"
-                />
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl">
+                  {selectedAppointment.patientName.split(' ').map((n: string) => n[0]).join('')}
+                </div>
                 <div>
-                  <p className="font-semibold text-gray-800">{selectedAppointment.patientId.name}</p>
-                  <p className="text-sm text-gray-500">{selectedAppointment.patientId.age} years • {selectedAppointment.patientId.gender}</p>
-                  <p className="text-xs text-gray-400 mt-1">Blood: {selectedAppointment.patientId.bloodGroup}</p>
+                  <p className="font-semibold text-gray-800">{selectedAppointment.patientName}</p>
+                  <p className="text-sm text-gray-500">Patient • ID: {selectedAppointment.patientId}</p>
+                  <p className="text-xs text-gray-400 mt-1">Contact info available</p>
                 </div>
               </div>
 
@@ -563,33 +591,19 @@ export default function Appointments() {
                     </div>
                   </div>
                 )}
-
-                {selectedAppointment.notes && (
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="w-5 h-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Notes</p>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{selectedAppointment.notes}</p>
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {/* Patient Contact */}
+              {/* Contact Information - Using patient name as fallback */}
               <div className="border-t border-gray-100 pt-4 mb-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Contact Information</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Patient Information</h4>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span>{selectedAppointment.patientId.phone}</span>
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span>{selectedAppointment.patientName}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{selectedAppointment.patientId.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span>{selectedAppointment.patientId.address}</span>
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span>Appointment ID: {selectedAppointment.id}</span>
                   </div>
                 </div>
               </div>
@@ -635,6 +649,8 @@ export default function Appointments() {
               <p className="text-sm text-gray-500">Select an appointment from the list to view details</p>
             </div>
           )}
+
+
         </div>
       </div>
     </DashboardWrapper>

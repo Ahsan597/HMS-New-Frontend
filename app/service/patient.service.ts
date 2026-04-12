@@ -1,4 +1,5 @@
 import { apiService } from './api.service';
+import { PatientProfile, UpdatePatientDto,ChangePasswordDto } from '../types/patient';
 
 interface Appointment {
   id?: string;
@@ -41,6 +42,41 @@ interface DoctorsResponse {
 }
 
 class PatientService {
+
+  async getProfile(): Promise<PatientProfile> {
+    try {
+      const response = await apiService.get<PatientProfile>('/patients/profile');
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch patient profile:', error);
+      throw error;
+    }
+  }
+
+  async updateProfile(data: UpdatePatientDto): Promise<PatientProfile> {
+    try {
+      const response = await apiService.put<PatientProfile>('/patients/profile', data);
+      return response;
+    } catch (error) {
+      console.error('Failed to update patient profile:', error);
+      throw error;
+    }
+  }
+
+  // ==================== PASSWORD METHODS ====================
+
+  async changePassword(data: ChangePasswordDto): Promise<{ message: string }> {
+    try {
+      const response = await apiService.patch<{ message: string }>('/auth/change-password', data);
+      return response;
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      throw error;
+    }
+  }
+
+
+
   // Appointment related APIs
   async createAppointment(appointmentData: Omit<Appointment, 'id' | 'status' | 'createdAt' | 'doctorName' | 'doctorSpecialty'>): Promise<AppointmentResponse> {
     try {
