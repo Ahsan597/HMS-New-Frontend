@@ -40,7 +40,9 @@ import {
 } from 'lucide-react';
 import { doctorService } from '@/app/service/doctor.service';
 import { authService } from '@/app/service/auth.service';
+
 import toast from 'react-hot-toast';
+import MedicalRecordsModal from '@/app/components/Doctor/MedicalRecordsModal';
 // Mock data matching your API structure
 const mockAppointments = [
   {
@@ -184,6 +186,8 @@ export default function Appointments() {
   const [showFilters, setShowFilters] = useState(false);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showMedicalRecords, setShowMedicalRecords] = useState(false);
+  const [selectedPatientForRecords, setSelectedPatientForRecords] = useState(null);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-500';
@@ -200,7 +204,10 @@ export default function Appointments() {
       fetchAppointments(doctorId);
     }
   }, []);
-
+  const handleViewMedicalRecords = (appointment: any) => {
+    setSelectedPatientForRecords(appointment.patientId);
+    setShowMedicalRecords(true);
+  };
   const fetchAppointments = async (doctorId: string) => {
     try {
       setLoading(true);
@@ -485,12 +492,6 @@ export default function Appointments() {
                           <button className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors">
                             <Eye className="w-4 h-4 text-blue-600" />
                           </button>
-                          <button className="p-1.5 hover:bg-green-100 rounded-lg transition-colors">
-                            <Check className="w-4 h-4 text-green-600" />
-                          </button>
-                          <button className="p-1.5 hover:bg-red-100 rounded-lg transition-colors">
-                            <X className="w-4 h-4 text-red-600" />
-                          </button>
                           <button className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors">
                             <MoreVertical className="w-4 h-4 text-gray-600" />
                           </button>
@@ -618,7 +619,10 @@ export default function Appointments() {
                   <MessageSquare className="w-4 h-4" />
                   Message
                 </button>
-                <button className="px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 text-sm col-span-2">
+                <button
+                  onClick={() => handleViewMedicalRecords(selectedAppointment)}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 text-sm col-span-2"
+                >
                   <FileText className="w-4 h-4" />
                   View Medical Records
                 </button>
@@ -627,14 +631,6 @@ export default function Appointments() {
               {/* Quick Actions */}
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between gap-2">
-                  <button className="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium flex items-center justify-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Confirm
-                  </button>
-                  <button className="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-xs font-medium flex items-center justify-center gap-1">
-                    <XCircle className="w-3 h-3" />
-                    Cancel
-                  </button>
                   <button className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-medium flex items-center justify-center gap-1">
                     <Clock3 className="w-3 h-3" />
                     Reschedule
@@ -653,6 +649,14 @@ export default function Appointments() {
 
         </div>
       </div>
+
+      {/* Medical Records Modal */}
+      <MedicalRecordsModal
+        isOpen={showMedicalRecords}
+        onClose={() => setShowMedicalRecords(false)}
+        patient={selectedPatientForRecords}
+        appointments={appointments}
+      />
     </DashboardWrapper>
   );
 }
